@@ -47,7 +47,7 @@ class VirtualPainter:
         cv2.setMouseCallback('proffessional virtual painter ',self.mouse_events)
 
     def smooth_points(self,x,y):
-        self.point_history((x,y))
+        self.point_history.append((x,y))
         avg_x = int(np.mean(pt[0] for pt in self.point_history))   
         avg_y = int(np.mean(pt[1] for pt in self.point_history))   
         return avg_x,avg_y
@@ -72,21 +72,21 @@ class VirtualPainter:
     def draw_ui(self,frame):
         for i ,color in enumerate(self.colors):
              x_starts = 10 + i * (self.color_button_width + 5 )
-             cv2.rectangle(frame,(x_starts,10,),(x_starts+self.color_button_width),self.button_height,color,-1)
+             cv2.rectangle(frame,(x_starts,10,),(x_starts+self.color_button_width,10+self.button_height),color,-1)
              if color == self.current_color:
                  cv2.rectangle(frame, (x_starts-2, 8), (x_starts+self.color_button_width+2, self.button_height+2), (255,255,255), 2)
             
         tool_starts_x = 10 + len(self.colors) * (self.color_button_width +5) +20
-        for i ,tool in enumerate(self.tool):
+        for i ,tool in enumerate(self.tools):
             x_start = tool_starts_x + i * (self.tool_button_width +5)
             color = (200,200,200)
-            cv2.rectangle(frame,(x_start,10),(x_start+self.tool_button_width,self.button_height),color-1,)
+            cv2.rectangle(frame,(x_start,10),(x_start+self.tool_button_width,self.button_height),color,-1)
             if tool == self.current_tools:
                 cv2.rectangle(frame,(x_start,10),(x_start+self.tool_button_width,self.button_height),(0,255,0),2)
-            cv2.putText(frame,tool.title(),x_start+10,45,cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,0,0),2)
+            cv2.putText(frame,tool.title(),(x_start+10,45),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,0,0),2)
 
         brush_ui_x = tool_starts_x + len(self.tools) * (self.tool_button_width + 5) + 20
-        cv2.putText(frame,f"Size: {self.brush_thickness}",(brush_ui_x+30),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,0,0),2)
+        cv2.putText(frame,f"Size: {self.brush_thickness}",(brush_ui_x+30,80),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,0,0),2)
         cv2.rectangle(frame, (brush_ui_x, 40), (brush_ui_x+20, 50), (0,0,0), 2)
         cv2.putText(frame, "-", (brush_ui_x+5, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
         cv2.rectangle(frame, (brush_ui_x+30, 40), (brush_ui_x+50, 50), (0,0,0), 2)
@@ -152,86 +152,56 @@ class VirtualPainter:
         elif shape == 'line':
             cv2.line(canvas,(x1,y1),(x2,y2),color,thickness)
 
-         
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def run(self):
         while True:
-            ret, frame = self.cap.read()   
-            if not ret:
-                break  
-
-            cv2.imshow("Webcam Feed", frame)  
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):   
+           ret,frame = self.cap.read()
+           if not ret : break
+           frame = cv2.flip(frame,1)
+           self.temp_canvas = self.canvas.copy()
+           rgb = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+           results= self.hands.process(rgb)
+           if results.multi_hand_landmarks:
+              for handLms in results.multi_hand_landmarks:
+                    self.mp_draw.draw_landmarks(frame, handLms, self.mp_hands.HAND_CONNECTIONS)
+                    x1 = int(handLms.landmark[8].x * 1280)
+                    y1 = int(handLms.landmark[8].y * 720)
+                    x2 = int(handLms.landmark[12].x * 1280)
+                    y2 = int(handLms.landmark[12].y * 720)
+                    distance = math.hypot(x2 - x1, y2 - y1)
+                    pinch = distance < 40 
+                    x1, y1 = self.smooth_points(x1, y1)
+                    cv2.circle(frame, (x1, y1), 10, self.current_color, -1)
+                    if y1 < self.button_height + 20 :
+                        self.handle_ui_interaction(x1,y1)
+                        self.drawing=False
+                    elif pinch:
+                           if not self.drawing:
+                               self.drawing = True
+                               self.prev_x,self.prev_y=x1,y1
+                               self.start_x,self.start_y=x1,y1
+                           elif self.current_tools in ["brush", "eraser"]:
+                               self.draw_brush(self.canvas,x1,y1)
+                           else:
+                               self.temp_canvas=self.canvas.copy()
+                               self.draw_shape(self.temp_canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
+                    else:
+                        if self.drawing and self.current_tools in ["rectangle", "circle", "line"]:
+                            self.draw_shape(self.canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
+                        self.drawing=False
+                        self.prev_x,self.prev_y =0,0
+           display = self.temp_canvas if self.drawing and self.current_tools in ["rectangle", "circle", "line"]   else self.canvas
+           mask =cv2.cvtColor(display,cv2.COLOR_BGR2GRAY)
+           _,mask =cv2.threshold(mask,5,255,cv2.THRESH_BINARY)
+           mask_inv = cv2.bitwise_not(mask)
+           bg = cv2.bitwise_and(frame,frame,mask=mask)
+           fg = cv2.bitwise_and(display,display,mask=mask_inv)
+           final = cv2.add(bg,fg)
+           self.draw_ui(final)
+           cv2.imshow("Professional Virtual Painter", final)
+           if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
-        self.cap.release()  
-        cv2.destroyAllWindows()   
+        self.cap.release()
+        cv2.destroyAllWindows()     
 
 if __name__ == "__main__":
     painter = VirtualPainter()
