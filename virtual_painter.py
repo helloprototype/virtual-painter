@@ -4,6 +4,7 @@ import mediapipe as mp
 import time 
 import os
 from collections import deque
+import math
 
 class VirtualPainter:
     def __init__(self):
@@ -133,7 +134,25 @@ class VirtualPainter:
             timestamp = time.strftime("%Y%m%d-%H%M%S")
             cv2.imwrite(f"{self.save_dir}/painting_{timestamp}.png", self.canvas)
             
+    def draw_brush(self,canvas,x,y):
+        if self.prev_x == 0 and self.prev_y == 0 :
+            self.prev_x,self.prev_y = x,y
+        if self.current_tools == 'brush':
+            cv2.line(canvas,(self.prev_x,self.prev_y),(x,y),self.current_color,self.brush_thickness)
+        elif self.current_tools == 'eraser':
+              cv2.line(canvas,(self.prev_x,self.prev_y),(x,y),(0,0,0),self.eraser_thickness)
+        self.prev_x,self.prev_y=x,y
     
+    def draw_shape(self,canvas,shape,x1,y1,x2,y2,color,thickness):
+        if shape == 'rectangle':
+            cv2.rectangle(canvas,(x1,y1),(x2,y2),color,thickness)
+        elif shape == 'circle':
+            radius = int(math.hypot(x2 - x1, y2 - y1))
+            cv2.circle(canvas,(x1,y1),radius,color,thickness)
+        elif shape == 'line':
+            cv2.line(canvas,(x1,y1),(x2,y2),color,thickness)
+
+         
 
 
 
