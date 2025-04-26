@@ -103,10 +103,37 @@ class VirtualPainter:
         self.prev_time = time.time()
         cv2.putText(frame, f"FPS: {fps}", (10, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,100), 2)
 
-        
 
+    def handle_ui_interaction(self,x,y):
+        if time.time() - self.last_ui_interaction_time < 0.5:
+            return
+        self.last_ui_interaction_time = time.time()
+        for i, color in enumerate(self.colors):
+            x_starts = 10 + i *(self.color_button_width+5)
+            if   x_starts < x < x_starts + self.color_button_width and 10 < y < self.button_height:
+                self.current_color = color
+                return
 
-
+        tool_start_x = 10 + len(self.colors) * (self.color_button_width + 5) + 20
+        for i,tool in enumerate(self.tools):
+            x_start = tool_start_x + i * (self.tool_button_width + 5)
+            if x_start < x < x_start + self.tool_button_width and 10 < y < self.button_height:
+                self.current_tools = tool 
+                return 
+        brush_ui_x = tool_start_x + len(self.tools) * (self.tool_button_width + 5) + 20
+        if brush_ui_x < x < brush_ui_x + 20 and 40 < y < 50 :
+            self.brush_size_index= max(0,self.brush_size_index-1)
+            self.brush_thickness= self.brush_size[self.brush_size_index]
+        elif brush_ui_x + 30 < x < brush_ui_x+50 and 40 < y < 50:
+            self.brush_size_index = min(len(self.brush_size)-1,self.brush_size_index+1)
+            self.brush_thickness=self.brush_thickness[self.brush_size_index]
+        elif brush_ui_x + 70 < x < brush_ui_x +70 + self.action_button_width :
+            self.canvas = np.zeros((720,1280,3),dtype=np.uint8)
+        elif brush_ui_x + 70 + self.action_button_width + 5 < x < brush_ui_x + 70 + 2 * self.action_button_width + 5:
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            cv2.imwrite(f"{self.save_dir}/painting_{timestamp}.png", self.canvas)
+            
+    
 
 
 
