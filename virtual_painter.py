@@ -16,7 +16,18 @@ class VirtualPainter:
         self.mp_hands = mp.solutions.hands
         self.mp_draw = mp.solutions.drawing_utils
         self.hands = mp.solutions.hands.Hands(max_num_hands=1, min_detection_confidence=0.75, min_tracking_confidence=0.7)
-        self.colors = [(0,0,255), (0,127,255), (0,255,255), (0,255,0), (255,0,0), (255,0,255), (150,150,150)]
+        self.colors =self.colors = [
+                            (0, 0, 255),     # Red
+                            (0, 127, 255),   # Orange
+                            (0, 255, 255),   # Yellow
+                            (0, 255, 0),     # Green
+                            (255, 0, 0),     # Blue
+                            (255, 0, 255),   # Magenta
+                            (150, 150, 150), # Gray
+                            (0, 0, 0),       # Black
+                            (255, 255, 255)  # White
+                        ]
+        
         self.current_color = self.colors[0]
         self.brush_size = [5,10,15,20,30]
         self.brush_size_index = 2
@@ -28,12 +39,14 @@ class VirtualPainter:
         self.save_dir = "paintings"
         os.makedirs(self.save_dir, exist_ok=True)
 
+        self.window_name = "Professional Virtual Painter"
 
         self.drawing = False
         self.prev_x = self. prev_y = 0 
         self.start_x = self.start_y = 0
         self.point_history = deque(maxlen=5)
-        self.last_ui_inctration_time = 5 
+        self.last_ui_interaction_time = 5 
+         
 
         self.prev_time = 0 
 
@@ -43,19 +56,19 @@ class VirtualPainter:
         self.action_button_width = 100 
 
         self.mouse_dwon = False
-        cv2.namedWindow('proffessional virtual painter ')
-        cv2.setMouseCallback('proffessional virtual painter ',self.mouse_events)
+        cv2.namedWindow(self.window_name)
+        cv2.setMouseCallback(self.window_name,self.mouse_events)
 
     def smooth_points(self,x,y):
         self.point_history.append((x,y))
-        avg_x = int(np.mean(pt[0] for pt in self.point_history))   
-        avg_y = int(np.mean(pt[1] for pt in self.point_history))   
+        avg_x = int(np.mean([pt[0] for pt in self.point_history]))   
+        avg_y = int(np.mean([pt[1] for pt in self.point_history]))   
         return avg_x,avg_y
     
     def mouse_events(self, event, x, y, flags, param):
         if y < self . button_height + 20 :
             if event == cv2.EVENT_LBUTTONDOWN:
-                self.handle_ui_inctrations(x,y)
+                self.handle_ui_inctration(x,y)
         elif event == cv2.EVENT_LBUTTONDOWN:
             self.mouse_dwon =True      
             self.drawing = True
@@ -65,7 +78,7 @@ class VirtualPainter:
               self.mouse_dwon = False
               self.drawing =False
               if self.current_tools in ["rectangle", "circle", "line"]:
-                   self.draw_shape(self.canvas, self.current_tool, self.start_x, self.start_y, x, y, self.current_color, self.brush_thickness)
+                   self.draw_shape(self.canvas, self.current_tools, self.start_x, self.start_y, x, y, self.current_color, self.brush_thickness)
         elif event == cv2.EVENT_MOUSEMOVE and self.mouse_dwon:
             if self.current_tools in  ["brush", "eraser"]:
                 self.draw_brush(self.canvas,x,y)
@@ -127,7 +140,7 @@ class VirtualPainter:
             self.brush_thickness= self.brush_size[self.brush_size_index]
         elif brush_ui_x + 30 < x < brush_ui_x+50 and 40 < y < 50:
             self.brush_size_index = min(len(self.brush_size)-1,self.brush_size_index+1)
-            self.brush_thickness=self.brush_thickness[self.brush_size_index]
+            self.brush_thickness=self.brush_size[self.brush_size_index]
         elif brush_ui_x + 70 < x < brush_ui_x +70 + self.action_button_width :
             self.canvas = np.zeros((720,1280,3),dtype=np.uint8)
         elif brush_ui_x + 70 + self.action_button_width + 5 < x < brush_ui_x + 70 + 2 * self.action_button_width + 5:
@@ -183,21 +196,21 @@ class VirtualPainter:
                                self.draw_brush(self.canvas,x1,y1)
                            else:
                                self.temp_canvas=self.canvas.copy()
-                               self.draw_shape(self.temp_canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
+                               self.draw_shape(self.temp_canvas, self.current_tools, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
                     else:
                         if self.drawing and self.current_tools in ["rectangle", "circle", "line"]:
-                            self.draw_shape(self.canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
+                            self.draw_shape(self.canvas, self.current_tools, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
                         self.drawing=False
                         self.prev_x,self.prev_y =0,0
            display = self.temp_canvas if self.drawing and self.current_tools in ["rectangle", "circle", "line"]   else self.canvas
            mask =cv2.cvtColor(display,cv2.COLOR_BGR2GRAY)
            _,mask =cv2.threshold(mask,5,255,cv2.THRESH_BINARY)
            mask_inv = cv2.bitwise_not(mask)
-           bg = cv2.bitwise_and(frame,frame,mask=mask)
-           fg = cv2.bitwise_and(display,display,mask=mask_inv)
+           bg = cv2.bitwise_and(frame,frame,mask=mask_inv)
+           fg = cv2.bitwise_and(display,display,mask=mask)
            final = cv2.add(bg,fg)
            self.draw_ui(final)
-           cv2.imshow("Professional Virtual Painter", final)
+           cv2.imshow(self.window_name, final)
            if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         self.cap.release()
