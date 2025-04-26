@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import mediapipe as mp
+import time 
 import os
 from collections import deque
 
@@ -67,11 +68,42 @@ class VirtualPainter:
         elif event == cv2.EVENT_MOUSEMOVE and self.mouse_dwon:
             if self.current_tools in  ["brush", "eraser"]:
                 self.draw_brush(self.canvas,x,y)
-                  
+    def draw_ui(self,frame):
+        for i ,color in enumerate(self.colors):
+             x_starts = 10 + i * (self.color_button_width + 5 )
+             cv2.rectangle(frame,(x_starts,10,),(x_starts+self.color_button_width),self.button_height,color,-1)
+             if color == self.current_color:
+                 cv2.rectangle(frame, (x_starts-2, 8), (x_starts+self.color_button_width+2, self.button_height+2), (255,255,255), 2)
+            
+        tool_starts_x = 10 + len(self.colors) * (self.color_button_width +5) +20
+        for i ,tool in enumerate(self.tool):
+            x_start = tool_starts_x + i * (self.tool_button_width +5)
+            color = (200,200,200)
+            cv2.rectangle(frame,(x_start,10),(x_start+self.tool_button_width,self.button_height),color-1,)
+            if tool == self.current_tools:
+                cv2.rectangle(frame,(x_start,10),(x_start+self.tool_button_width,self.button_height),(0,255,0),2)
+            cv2.putText(frame,tool.title(),x_start+10,45,cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,0,0),2)
 
+        brush_ui_x = tool_starts_x + len(self.tools) * (self.tool_button_width + 5) + 20
+        cv2.putText(frame,f"Size: {self.brush_thickness}",(brush_ui_x+30),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,0,0),2)
+        cv2.rectangle(frame, (brush_ui_x, 40), (brush_ui_x+20, 50), (0,0,0), 2)
+        cv2.putText(frame, "-", (brush_ui_x+5, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
+        cv2.rectangle(frame, (brush_ui_x+30, 40), (brush_ui_x+50, 50), (0,0,0), 2)
+        cv2.putText(frame, "+", (brush_ui_x+35, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
 
+        action_x = brush_ui_x +70 
+        cv2.rectangle(frame,(action_x,10),(action_x+self.action_button_width,self.button_height),(100,100,255),-1)
+        cv2.putText(frame,'clear',(action_x+20,45),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,0,0),2)
 
+        action_x += self.action_button_width + 5
+        cv2.rectangle(frame, (action_x, 10), (action_x + self.action_button_width, self.button_height), (100,255,100), -1)
+        cv2.putText(frame, "Save", (action_x+20, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 2)
 
+        fps = int(1 / (time.time() - self.prev_time + 1e-5))
+        self.prev_time = time.time()
+        cv2.putText(frame, f"FPS: {fps}", (10, 700), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,100), 2)
+
+        
 
 
 
