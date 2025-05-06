@@ -1,10 +1,19 @@
-#  Virtual Painter
+## 🎨 Virtual Painter
 
 A professional-grade virtual painting application that transforms your webcam into an interactive canvas, enabling you to create digital art using hand gestures or mouse controls.
 
-![Virtual Painter Demo](/screenshots/v.png)
-![Virtual Painter Demo](/screenshots/v2.png)
-![Virtual Painter Demo](/screenshots/v1.png)
+### 🖼️ Click any image below to watch the demo video:
+
+<a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
+  <img src="/screenshots/v.png" alt="Virtual Painter Demo 1" width="300" style="margin-right: 10px;" />
+</a>
+<a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
+  <img src="/screenshots/v2.png" alt="Virtual Painter Demo 2" width="300" style="margin-right: 10px;" />
+</a>
+<a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
+  <img src="/screenshots/v1.png" alt="Virtual Painter Demo 3" width="300" />
+</a>
+
 
 ## ✨ Features
 
