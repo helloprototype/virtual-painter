@@ -96,6 +96,18 @@ You can easily customize the application by modifying these parameters in the co
 - Add new tools to the `tools` list (requires implementing corresponding drawing functions)
 - Change UI dimensions in the initialization section
 
+## 💫 Support This Project
+If you find Virtual Painter fun, helpful, or inspiring, please consider giving it a ⭐️ on GitHub — it helps boost visibility, supports the project, and motivates further development!
+Your star is like a digital high-five 🙌 — and it truly means a lot!
+
+🌟 Click the star at the top-right corner of this page to support!
+
+
+Want to see more gesture-controlled creativity tools?
+A star helps us bring more magic to your screen. ✨🎨
+
+
+![GitHub Repo stars](https://img.shields.io/github/stars/sayyedrabeeh/virtual-painter?style=social)
 
 ## 🙏 Acknowledgements
 
