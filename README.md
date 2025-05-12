@@ -134,8 +134,6 @@ A star helps us bring more magic to your screen. ✨🎨
 
 <p align="center">Developed with ❤️ for Art Enthusiasts</p>
 
-<<<<<<< HEAD
-## Happy Coding 
-=======
+ 
 <h3 align="center">Happy Coding 🎨</h3>
->>>>>>> ae9b1d0 (docs)
+ 
