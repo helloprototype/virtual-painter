@@ -23,10 +23,13 @@ Thanks for your support! ❤
 ### 🖼️ Click any image below to watch the demo video:
 
 <a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
-  <img src="/screenshots/vp1.jpg" alt="Virtual Painter Demo 1"   style="margin-bottom: 20px;" />
+  <img src="/screenshots/vp1.jpg" alt="Virtual Painter Demo 1"  />
 </a>
+
+### 🖼️ Click   image below :
+
 <a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
-  <img src="/screenshots/vp2.jpg" alt="Virtual Painter Demo 2"   style="margin-right: 10px;" />
+  <img src="/screenshots/vp2.jpg" alt="Virtual Painter Demo 2"     />
 </a>
  
 
