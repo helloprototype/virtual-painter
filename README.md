@@ -1,19 +1,34 @@
-## 🎨 Virtual Painter
 
-A professional-grade virtual painting application that transforms your webcam into an interactive canvas, enabling you to create digital art using hand gestures or mouse controls.
+# 🎨 Virtual Painter
+
+This project is a A professional-grade virtual painting application that transforms your webcam into an interactive canvas, enabling you to create digital art using hand gestures or mouse controls.. If you find this repository helpful or interesting, please consider giving it a star! ⭐
+
+## Why Star This Repository?
+
+- It helps others discover the project.
+- It motivates the me to keep improving it.
+- It supports open-source development!
+
+## How to Contribute
+
+If you want to contribute, feel free to fork the repository and submit a pull request. Also, don’t forget to star the repo!
+
+Thanks for your support! ❤
+
+[Star the project](https://github.com/sayyedrabeeh/virtual-painter)
+ 
+
+
 
 ### 🖼️ Click any image below to watch the demo video:
 
 <a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
-  <img src="/screenshots/v.png" alt="Virtual Painter Demo 1" width="300" style="margin-right: 10px;" />
+  <img src="/screenshots/vp1.jpg" alt="Virtual Painter Demo 1"   style="margin-bottom: 20px;" />
 </a>
 <a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
-  <img src="/screenshots/v2.png" alt="Virtual Painter Demo 2" width="300" style="margin-right: 10px;" />
+  <img src="/screenshots/vp2.jpg" alt="Virtual Painter Demo 2"   style="margin-right: 10px;" />
 </a>
-<a href="https://youtu.be/AXkNGLHpuh4" target="_blank">
-  <img src="/screenshots/v1.png" alt="Virtual Painter Demo 3" width="300" />
-</a>
-
+ 
 
 ## ✨ Features
 
@@ -117,6 +132,10 @@ A star helps us bring more magic to your screen. ✨🎨
 
 ---
 
-Developed with ❤️ by [sayyed rabeeh]
+<p align="center">Developed with ❤️ for Art Enthusiasts</p>
 
+<<<<<<< HEAD
 ## Happy Coding 
+=======
+<h3 align="center">Happy Coding 🎨</h3>
+>>>>>>> ae9b1d0 (docs)
