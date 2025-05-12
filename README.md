@@ -1,7 +1,7 @@
 
 # 🎨 Virtual Painter
 
-This project is a A professional-grade virtual painting application that transforms your webcam into an interactive canvas, enabling you to create digital art using hand gestures or mouse controls.. If you find this repository helpful or interesting, please consider giving it a star! ⭐
+This project is a A professional-grade virtual painting application that transforms your webcam into an interactive canvas, enabling you to create digital art using hand gestures or mouse controls.. If you find this repository helpful or interesting, please consider giving it a star! ⭐ and Follow Me for cool Projects
 
 ## Why Star This Repository?
 
