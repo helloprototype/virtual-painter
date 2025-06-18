@@ -5,10 +5,6 @@ import time
 import os
 from collections import deque
 import math
-import streamlit as st
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfiguration
-
- 
 
 class VirtualPainter:
     def __init__(self):
