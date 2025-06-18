@@ -6,6 +6,10 @@ import os
 from collections import deque
 import math
 
+
+import mediapipe as mp
+print(mp.__file__)
+
 class VirtualPainter:
     def __init__(self):
         self.cap = cv2.VideoCapture(0)
