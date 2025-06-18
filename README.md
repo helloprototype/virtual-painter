@@ -49,6 +49,24 @@ Thanks for your support! ❤
 - **Smooth Drawing** - Point averaging for smoother lines and reduced jitter
 - **Professional UI** - Clean, intuitive interface with visual feedback
 
+
+## 🚀 Run Without Installing Python
+
+If you **don’t want to install Python or dependencies manually**, you can use the pre-built `.exe` file:
+
+### ✅ How to Use the `.exe` Version
+
+1. **Download the `.exe` file** from the [Releases Section](https://github.com/sayyedrabeeh/virtual-painter/releases).
+
+2. Ensure your system has a **working webcam** connected.
+
+3. Double-click the `.exe` file to launch the app.
+
+4. Start drawing instantly using your **mouse** or **hand gestures**.
+
+> ⚠️ **Note:** Windows SmartScreen may block the file. Click **“More Info” → “Run Anyway”** to continue.
+
+
 ## 🖥️ Requirements
 
 - Python 3.6+
