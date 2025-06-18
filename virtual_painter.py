@@ -10,16 +10,14 @@ from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, RTCConfigura
 
  
 
-class VirtualPainter:
+class VideoProcessor(VideoTransformerBase):
     def __init__(self):
-        self.cap = cv2.VideoCapture(0)
-        self.cap.set(3, 1280)
-        self.cap.set(4, 720)
-        self.canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
-        self.temp_canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
         self.mp_hands = mp.solutions.hands
         self.mp_draw = mp.solutions.drawing_utils
-        self.hands = mp.solutions.hands.Hands(max_num_hands=1, min_detection_confidence=0.75, min_tracking_confidence=0.7)
+        self.hands = self.mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.75, min_tracking_confidence=0.7)
+
+        self.canvas = np.zeros((720, 1280, 3), dtype=np.uint8) 
+        self.temp_canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
 
         self.colors = [
             (0, 0, 255), (0, 127, 255), (0, 255, 255),
@@ -34,14 +32,8 @@ class VirtualPainter:
         self.brush_thickness = self.brush_size[self.brush_size_index]
         self.eraser_thickness = 50
 
-        # Updated tools and button width
         self.tools = ["brush", "eraser", "rectangle", "circle", "line", "filled_rectangle", "filled_circle", "clear_canvas"]
         self.current_tool = "brush"
-
-        self.save_dir = "paintings"
-        os.makedirs(self.save_dir, exist_ok=True)
-
-        self.window_name = "Professional Virtual Painter"
 
         self.drawing = False
         self.prev_x = self.prev_y = 0
@@ -51,12 +43,8 @@ class VirtualPainter:
         self.last_ui_interaction_time = 0
         self.button_height = 60
         self.color_button_width = 40
-        self.tool_button_width = 90  # decreased from 120 to 90
+        self.tool_button_width = 90
         self.action_button_width = 100
-
-        self.mouse_down = False
-        cv2.namedWindow(self.window_name)
-        cv2.setMouseCallback(self.window_name, self.mouse_events)
 
     def smooth_points(self, x, y):
         self.point_history.append((x, y))
@@ -64,23 +52,28 @@ class VirtualPainter:
         avg_y = int(np.mean([pt[1] for pt in self.point_history]))
         return avg_x, avg_y
 
-    def mouse_events(self, event, x, y, flags, param):
-        if y < self.button_height + 20:
-            if event == cv2.EVENT_LBUTTONDOWN:
-                self.handle_ui_interaction(x, y)
-        elif event == cv2.EVENT_LBUTTONDOWN:
-            self.mouse_down = True
-            self.drawing = True
+    def draw_brush(self, canvas, x, y):
+        if self.prev_x == 0 and self.prev_y == 0:
             self.prev_x, self.prev_y = x, y
-            self.start_x, self.start_y = x, y
-        elif event == cv2.EVENT_LBUTTONUP:
-            self.mouse_down = False
-            self.drawing = False
-            if self.current_tool in ["rectangle", "circle", "line", "filled_rectangle", "filled_circle"]:
-                self.draw_shape(self.canvas, self.current_tool, self.start_x, self.start_y, x, y, self.current_color, self.brush_thickness)
-        elif event == cv2.EVENT_MOUSEMOVE and self.mouse_down:
-            if self.current_tool in ["brush", "eraser"]:
-                self.draw_brush(self.canvas, x, y)
+        if self.current_tool == "brush":
+            cv2.line(canvas, (self.prev_x, self.prev_y), (x, y), self.current_color, self.brush_thickness)
+        elif self.current_tool == "eraser":
+            cv2.line(canvas, (self.prev_x, self.prev_y), (x, y), (0, 0, 0), self.eraser_thickness)
+        self.prev_x, self.prev_y = x, y
+
+    def draw_shape(self, canvas, shape, x1, y1, x2, y2, color, thickness):
+        if shape == 'rectangle':
+            cv2.rectangle(canvas, (x1, y1), (x2, y2), color, thickness)
+        elif shape == 'filled_rectangle':
+            cv2.rectangle(canvas, (x1, y1), (x2, y2), color, -1)
+        elif shape == 'circle':
+            radius = int(math.hypot(x2 - x1, y2 - y1))
+            cv2.circle(canvas, (x1, y1), radius, color, thickness)
+        elif shape == 'filled_circle':
+            radius = int(math.hypot(x2 - x1, y2 - y1))
+            cv2.circle(canvas, (x1, y1), radius, color, -1)
+        elif shape == 'line':
+            cv2.line(canvas, (x1, y1), (x2, y2), color, thickness)
 
     def draw_ui(self, frame):
         colors_per_row = 6
@@ -114,10 +107,7 @@ class VirtualPainter:
         cv2.putText(frame, "+", (brush_ui_x + 97, 65), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
     def handle_ui_interaction(self, x, y):
-        if time.time() - self.last_ui_interaction_time < 0.3:
-            return
-        self.last_ui_interaction_time = time.time()
-
+        
         colors_per_row = 6
         for i, color in enumerate(self.colors):
             row = i // colors_per_row
@@ -146,88 +136,88 @@ class VirtualPainter:
             self.brush_size_index = min(len(self.brush_size) - 1, self.brush_size_index + 1)
             self.brush_thickness = self.brush_size[self.brush_size_index]
 
-    def draw_brush(self, canvas, x, y):
-        if self.prev_x == 0 and self.prev_y == 0:
-            self.prev_x, self.prev_y = x, y
-        if self.current_tool == "brush":
-            cv2.line(canvas, (self.prev_x, self.prev_y), (x, y), self.current_color, self.brush_thickness)
-        elif self.current_tool == "eraser":
-            cv2.line(canvas, (self.prev_x, self.prev_y), (x, y), (0, 0, 0), self.eraser_thickness)
-        self.prev_x, self.prev_y = x, y
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        img = cv2.flip(img, 1) 
 
-    def draw_shape(self, canvas, shape, x1, y1, x2, y2, color, thickness):
-        if shape == 'rectangle':
-            cv2.rectangle(canvas, (x1, y1), (x2, y2), color, thickness)
-        elif shape == 'filled_rectangle':
-            cv2.rectangle(canvas, (x1, y1), (x2, y2), color, -1)
-        elif shape == 'circle':
-            radius = int(math.hypot(x2 - x1, y2 - y1))
-            cv2.circle(canvas, (x1, y1), radius, color, thickness)
-        elif shape == 'filled_circle':
-            radius = int(math.hypot(x2 - x1, y2 - y1))
-            cv2.circle(canvas, (x1, y1), radius, color, -1)
-        elif shape == 'line':
-            cv2.line(canvas, (x1, y1), (x2, y2), color, thickness)
+        rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        results = self.hands.process(rgb)
 
-    def run(self):
-        while True:
-            ret, frame = self.cap.read()
-            if not ret:
-                break
-            frame = cv2.flip(frame, 1)
-            self.temp_canvas = self.canvas.copy()
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = self.hands.process(rgb)
+        if results.multi_hand_landmarks:
+            for handLms in results.multi_hand_landmarks:
+                self.mp_draw.draw_landmarks(img, handLms, self.mp_hands.HAND_CONNECTIONS)
 
-            if results.multi_hand_landmarks:
-                for handLms in results.multi_hand_landmarks:
-                    self.mp_draw.draw_landmarks(frame, handLms, self.mp_hands.HAND_CONNECTIONS)
+                x1 = int(handLms.landmark[8].x * img.shape[1]) 
+                y1 = int(handLms.landmark[8].y * img.shape[0]) 
+                x2 = int(handLms.landmark[12].x * img.shape[1]) 
+                y2 = int(handLms.landmark[12].y * img.shape[0]) 
+                distance = math.hypot(x2 - x1, y2 - y1)
+                pinch = distance < 40
 
-                    x1 = int(handLms.landmark[8].x * 1280)
-                    y1 = int(handLms.landmark[8].y * 720)
-                    x2 = int(handLms.landmark[12].x * 1280)
-                    y2 = int(handLms.landmark[12].y * 720)
-                    distance = math.hypot(x2 - x1, y2 - y1)
-                    pinch = distance < 40
+                x1, y1 = self.smooth_points(x1, y1)
+                cv2.circle(img, (x1, y1), 10, self.current_color, -1)
 
-                    x1, y1 = self.smooth_points(x1, y1)
-                    cv2.circle(frame, (x1, y1), 10, self.current_color, -1)
+                if y1 < 150: 
 
-                    if y1 < 150:
-                        self.handle_ui_interaction(x1, y1)
-                        self.drawing = False
-                    elif pinch:
-                        if not self.drawing:
-                            self.drawing = True
-                            self.prev_x, self.prev_y = x1, y1
-                            self.start_x, self.start_y = x1, y1
-                        elif self.current_tool in ["brush", "eraser"]:
-                            self.draw_brush(self.canvas, x1, y1)
-                        else:
-                            self.temp_canvas = self.canvas.copy()
-                            self.draw_shape(self.temp_canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
+                    self.drawing = False
+                elif pinch:
+                    if not self.drawing:
+                        self.drawing = True
+                        self.prev_x, self.prev_y = x1, y1
+                        self.start_x, self.start_y = x1, y1
+                    elif self.current_tool in ["brush", "eraser"]:
+                        self.draw_brush(self.canvas, x1, y1)
                     else:
-                        if self.drawing and self.current_tool in ["rectangle", "circle", "line", "filled_rectangle", "filled_circle"]:
-                            self.draw_shape(self.canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
-                        self.drawing = False
-                        self.prev_x, self.prev_y = 0, 0
+                        self.temp_canvas = self.canvas.copy()
+                        self.draw_shape(self.temp_canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
+                else:
+                    if self.drawing and self.current_tool in ["rectangle", "circle", "line", "filled_rectangle", "filled_circle"]:
+                        self.draw_shape(self.canvas, self.current_tool, self.start_x, self.start_y, x1, y1, self.current_color, self.brush_thickness)
+                    self.drawing = False
+                    self.prev_x, self.prev_y = 0, 0
 
-            display = self.temp_canvas if self.drawing and self.current_tool in ["rectangle", "circle", "line", "filled_rectangle", "filled_circle"] else self.canvas
-            mask = cv2.cvtColor(display, cv2.COLOR_BGR2GRAY)
-            _, mask = cv2.threshold(mask, 5, 255, cv2.THRESH_BINARY)
-            mask_inv = cv2.bitwise_not(mask)
-            bg = cv2.bitwise_and(frame, frame, mask=mask_inv)
-            fg = cv2.bitwise_and(display, display, mask=mask)
-            final = cv2.add(bg, fg)
-            self.draw_ui(final)
-            cv2.imshow(self.window_name, final)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        display = self.temp_canvas if self.drawing and self.current_tool in ["rectangle", "circle", "line", "filled_rectangle", "filled_circle"] else self.canvas
+        mask = cv2.cvtColor(display, cv2.COLOR_BGR2GRAY)
+        _, mask = cv2.threshold(mask, 5, 255, cv2.THRESH_BINARY)
+        mask_inv = cv2.bitwise_not(mask)
+        bg = cv2.bitwise_and(img, img, mask=mask_inv)
+        fg = cv2.bitwise_and(display, display, mask=mask)
+        final = cv2.add(bg, fg)
 
-        self.cap.release()
-        cv2.destroyAllWindows()
+        self.draw_ui(final)
 
-if __name__ == "__main__":
-    app = VirtualPainter()
-    app.run()
+        return final
+
+st.title("Virtual Painter with Hand Tracking")
+st.write("Draw in the air using your hand!")
+
+if 'painter_state' not in st.session_state:
+    st.session_state.painter_state = VideoProcessor()
+
+
+col1, col2, col3, col4, col5 = st.columns([1,1,1,1,1])
+
+with col1:
+    st.subheader("Colors")
+    selected_color_rgb = st.color_picker("Choose a color", '#0000FF', key='color_picker')
+    selected_color_bgr = tuple(int(selected_color_rgb.lstrip('#')[i:i+2], 16) for i in (4, 2, 0))
+    st.session_state.painter_state.current_color = selected_color_bgr
+
+
+with col2:
+    st.subheader("Tools")
+    selected_tool = st.radio("Select Tool", st.session_state.painter_state.tools, key='tool_radio')
+    st.session_state.painter_state.current_tool = selected_tool
+    if selected_tool == "clear_canvas":
+        if st.button("Clear Canvas"):
+            st.session_state.painter_state.canvas = np.zeros((720, 1280, 3), dtype=np.uint8)
+
+
+with col3:
+    st.subheader("Brush Size")
+    brush_thickness_val = st.slider("Thickness", 1, 50, st.session_state.painter_state.brush_thickness, key='brush_slider')
+    st.session_state.painter_state.brush_thickness = brush_thickness_val
+    st.session_state.painter_state.eraser_thickness = brush_thickness_val * 2 
+
+webrtc_streamer(key="painter_app", video_processor_factory=VideoProcessor, rtc_configuration=RTC_CONFIGURATION)
