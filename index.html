@@ -31,11 +31,12 @@
 
     // Access webcam
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true })
+      navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } })
         .then(stream => {
           video.srcObject = stream;
           video.play();
-        });
+        })
+        .catch(err => console.error('Webcam error:', err));
     }
 
     const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`});
@@ -58,14 +59,15 @@
 
     function onResults(results) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+      if (results.image) ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
 
       if (results.multiHandLandmarks) {
         for (const landmarks of results.multiHandLandmarks) {
-          drawLandmarks(ctx, landmarks, {color: '#00FF00', fillColor: '#FF0000'});
+          drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {color: '#00FF00', lineWidth: 2});
+          drawLandmarks(ctx, landmarks, {color: '#FF0000', fillColor: '#FF0000', lineWidth: 2});
 
-          const indexTip = landmarks[8];
-          const middleTip = landmarks[12];
+          const indexTip = landmarks[8]; // Index finger tip
+          const middleTip = landmarks[12]; // Middle finger tip
           const x1 = indexTip.x * canvas.width;
           const y1 = indexTip.y * canvas.height;
           const x2 = middleTip.x * canvas.width;
@@ -73,9 +75,10 @@
           const distance = Math.hypot(x2 - x1, y2 - y1);
           const pinch = distance < 40;
 
-          if (y1 < 150) {
-            // UI interaction area (to be expanded)
-          } else if (pinch) {
+          // Debug: Log coordinates
+          console.log(`Index: (${x1}, ${y1}), Middle: (${x2}, ${y2}), Distance: ${distance}`);
+
+          if (y1 > 150 && pinch) { // Avoid UI area
             if (!isDrawing) {
               isDrawing = true;
               prevX = x1;
@@ -95,14 +98,15 @@
             isDrawing = false;
           }
         }
+      } else {
+        console.log('No hands detected');
       }
     }
 
-    // Basic UI (expandable)
+    // Basic UI placeholder
     function drawUI() {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(0, 0, canvas.width, 150);
-      // Add color/tools UI here later
     }
     drawUI();
   </script>
